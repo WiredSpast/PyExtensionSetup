@@ -2,15 +2,15 @@ import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
-import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -56,11 +56,16 @@ public class PyExtensionSetup {
         } catch (Exception e) {
             new JFXPanel(); // Create JavaFX thread
             Platform.runLater(() -> {
-                Alert error = new Alert(Alert.AlertType.ERROR);
-                error.setTitle("Error while setting up python extension!");
-                error.setHeaderText("Error in setup of " + new File(PyExtensionSetup.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile().getName());
-                error.setContentText(e.getMessage());
-                error.showAndWait();
+                try {
+                    new File("error.txt");
+                    FileOutputStream fos = new FileOutputStream(new File("error.txt"));
+                    Alert error = new Alert(Alert.AlertType.ERROR);
+                    error.setTitle("Error while setting up python extension!");
+                    error.setHeaderText("Error in setup of " + new File(URLDecoder.decode(PyExtensionSetup.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF8")).getParentFile().getParentFile().getName());
+                    e.printStackTrace(new PrintStream(fos));
+                    error.setContentText(e.getMessage());
+                    error.showAndWait();
+                } catch (IOException ignored) {}
             });
         }
     }
@@ -70,9 +75,9 @@ public class PyExtensionSetup {
             ProcessBuilder pb = new ProcessBuilder("python", "--version");
             Process p = pb.start();
 
-            String error = IOUtils.toString(p.getErrorStream(), StandardCharsets.UTF_8);
+            String error = new BufferedReader(new InputStreamReader(p.getErrorStream(), StandardCharsets.UTF_8)).readLine();
             if(!error.isEmpty()) return false;
-            String version = IOUtils.toString(p.getInputStream(), StandardCharsets.UTF_8);
+            String version = new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8)).readLine();
             version = version.replace("Python ", "");
 
             return isNewerOrEqual(version, minVersion);
@@ -140,7 +145,7 @@ public class PyExtensionSetup {
             String downloadUrl = "https://www.python.org/ftp/python/3.7.9/python-3.7.9-amd64.exe"; // Compatible with Windows Vista and above
             File installerExe = downloadCacheFile(new URL(downloadUrl), "pythonInstaller.exe");
             ProcessBuilder pb = new ProcessBuilder(installerExe.toString(), "/quiet", "PrependPath=1");
-            pb.directory(new File(PyExtensionSetup.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile());
+            pb.directory(new File(URLDecoder.decode(PyExtensionSetup.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF8")).getParentFile());
             Process p = pb.start();
             p.waitFor();
         } catch (IOException e) {
@@ -152,7 +157,7 @@ public class PyExtensionSetup {
         // Too complicated to include all distributions
         try {
             if(!requestContinueApproval("Install/Update Python",
-                    new File(PyExtensionSetup.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile().getName() + " requires Python to be installed/updated!",
+                    new File(URLDecoder.decode(PyExtensionSetup.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF8")).getParentFile().getParentFile().getName() + " requires Python to be installed/updated!",
                     String.format("Use your local package manager to update python to a version of %s or higher, afterwards click OK\n(If you click OK before installing/updating, the extension will not run this time)", minVersion))){
                 throw new Exception("Setup cancelled, extension will most likely not launch!");
             }
@@ -170,7 +175,7 @@ public class PyExtensionSetup {
             String downloadUrl = "https://www.python.org/ftp/python/3.7.0/python-3.7.0-macosx10.6.pkg"; // Compatible with Mac OS X 10.6 and above
             File installerPkg = downloadCacheFile(new URL(downloadUrl), "pythonInstaller.pkg");
             ProcessBuilder pb = new ProcessBuilder("installer", "-pkg", installerPkg.toString(), "-target", "CurrenUserHomeDirectory");
-            pb.directory(new File(PyExtensionSetup.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile());
+            pb.directory(new File(URLDecoder.decode(PyExtensionSetup.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF8")).getParentFile());
             Process p = pb.start();
             p.waitFor();
         } catch (IOException e) {
@@ -218,6 +223,7 @@ public class PyExtensionSetup {
             File req = new File("requirements.txt");
             if (req.exists()) {
                 ProcessBuilder pb = new ProcessBuilder("pip", "install", "-r", "requirements.txt");
+                pb.directory(new File(URLDecoder.decode(PyExtensionSetup.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF8")).getParentFile());
                 Process p = pb.start();
                 p.waitFor();
             }
@@ -232,12 +238,12 @@ public class PyExtensionSetup {
         String file = getArgument(args, FILE_FLAG);
         String port = getArgument(args, PORT_FLAG);
 
-        List<String> command = Arrays.asList("python", extensionScript, "-p", port);
+        ArrayList<String> command =  new ArrayList<>(Arrays.asList("python", extensionScript, "-p", port));
         if(file != null) command.addAll(Arrays.asList("-f", file));
         if(cookie != null) command.addAll(Arrays.asList("-c", cookie));
 
         ProcessBuilder pb = new ProcessBuilder(command.toArray(new String[command.size()]));
-        pb.directory(new File(PyExtensionSetup.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile());
+        pb.directory(new File(URLDecoder.decode(PyExtensionSetup.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF8")).getParentFile());
         pb.start();
     }
 }
