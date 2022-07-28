@@ -102,11 +102,11 @@ public class PyExtensionSetup {
     private static void installPython(String minVersion) throws Exception {
         String os = System.getProperty("os.name").toLowerCase();
         if(os.contains("win")) {
-            installOnWindows();
+            installOnWindows(minVersion);
         } else if(os.contains("nix") || os.contains("nux") || os.contains("aix")) {
             installOnLinux(minVersion);
         } else if(os.contains("mac")) {
-            installOnMac();
+            installOnMac(minVersion);
         } else {
             throw new Exception("Unsupported Operating System");
         }
@@ -136,13 +136,13 @@ public class PyExtensionSetup {
         return requestTask.get();
     }
 
-    private static void installOnWindows() throws Exception {
-        if(!requestContinueApproval("Install/Update Python",
+    private static void installOnWindows(String minVersion) throws Exception {
+        if(!requestContinueApproval(String.format("Install/Update Python %s", minVersion),
                 "Python not found or newer version required",
                 "Do you want to install/update Python?\nExtension will be launched once installation is completed")) throw new Exception("Python installation rejected, extension wont be able to run!");
         // Alternative: Install Chocolatey or Nuget (Windows package manager)
         try {
-            String downloadUrl = "https://www.python.org/ftp/python/3.7.9/python-3.7.9-amd64.exe"; // Compatible with Windows Vista and above
+            String downloadUrl = String.format("https://www.python.org/ftp/python/%s/python-%s-amd64.exe", minVersion, minVersion);
             File installerExe = downloadCacheFile(new URL(downloadUrl), "pythonInstaller.exe");
             ProcessBuilder pb = new ProcessBuilder(installerExe.toString(), "/quiet", "PrependPath=1");
             pb.directory(new File(URLDecoder.decode(PyExtensionSetup.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF8")).getParentFile());
@@ -156,7 +156,7 @@ public class PyExtensionSetup {
     private static void installOnLinux(String minVersion) throws Exception {
         // Too complicated to include all distributions
         try {
-            if(!requestContinueApproval("Install/Update Python",
+            if(!requestContinueApproval(String.format("Install/Update Python %s", minVersion),
                     new File(URLDecoder.decode(PyExtensionSetup.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF8")).getParentFile().getParentFile().getName() + " requires Python to be installed/updated!",
                     String.format("Use your local package manager to update python to a version of %s or higher, afterwards click OK\n(If you click OK before installing/updating, the extension will not run this time)", minVersion))){
                 throw new Exception("Setup cancelled, extension will most likely not launch!");
@@ -166,13 +166,13 @@ public class PyExtensionSetup {
         }
     }
 
-    private static void installOnMac() throws Exception {
-        if(!requestContinueApproval("Install/Update Python",
+    private static void installOnMac(String minVersion) throws Exception {
+        if(!requestContinueApproval(String.format("Install/Update Python %s", minVersion),
                 "Python not found or newer version required",
                 "Do you want to install/update Python?\nExtension will be launched once installation is completed")) throw new Exception("Python installation rejected, extension wont be able to run!");
         // Alternative: Install Brew (Mac/Linux package manager)
         try {
-            String downloadUrl = "https://www.python.org/ftp/python/3.7.0/python-3.7.0-macosx10.6.pkg"; // Compatible with Mac OS X 10.6 and above
+            String downloadUrl = String.format("https://www.python.org/ftp/python/%s/python-%s-macosx10.6.pkg", minVersion, minVersion);
             File installerPkg = downloadCacheFile(new URL(downloadUrl), "pythonInstaller.pkg");
             ProcessBuilder pb = new ProcessBuilder("installer", "-pkg", installerPkg.toString(), "-target", "CurrenUserHomeDirectory");
             pb.directory(new File(URLDecoder.decode(PyExtensionSetup.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF8")).getParentFile());
