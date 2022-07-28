@@ -174,7 +174,7 @@ public class PyExtensionSetup {
         try {
             String downloadUrl = String.format("https://www.python.org/ftp/python/%s/python-%s-macosx10.6.pkg", minVersion, minVersion);
             File installerPkg = downloadCacheFile(new URL(downloadUrl), "pythonInstaller.pkg");
-            ProcessBuilder pb = new ProcessBuilder("installer", "-pkg", installerPkg.toString(), "-target", "CurrenUserHomeDirectory");
+            ProcessBuilder pb = new ProcessBuilder("installer", "-pkg", installerPkg.toString(), "-target", "CurrentUserHomeDirectory");
             pb.directory(new File(URLDecoder.decode(PyExtensionSetup.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF8")).getParentFile());
             Process p = pb.start();
             p.waitFor();
