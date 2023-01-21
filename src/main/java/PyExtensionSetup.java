@@ -50,9 +50,12 @@ public class PyExtensionSetup {
             if(!isPythonInstalledAndUpToDate(minVersion)) installPython(minVersion);
 
             fixRequirements();
+            System.out.println("Requirements fixed");
 
             runExtension(args);
+            System.out.println("extension ran");
             clearCache();
+            System.out.println("cache cleared");
         } catch (Exception e) {
             new JFXPanel(); // Create JavaFX thread
             Platform.runLater(() -> {
@@ -76,7 +79,7 @@ public class PyExtensionSetup {
             Process p = pb.start();
 
             String error = new BufferedReader(new InputStreamReader(p.getErrorStream(), StandardCharsets.UTF_8)).readLine();
-            if(!error.isEmpty()) return false;
+            if(error != null) return false;
             String version = new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8)).readLine();
             version = version.replace("Python ", "");
 
